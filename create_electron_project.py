@@ -51,8 +51,34 @@ def update_package_json(path):
     try:
         with open(package_json, 'r', encoding='utf-8') as f:
             package = json.load(f)
+        
+        # 更新现有配置
         package['main'] = 'main.js'
         package['scripts']['start'] = 'electron .'
+        
+        # 添加打包相关配置
+        package['scripts']['build'] = 'electron-builder'
+        package['build'] = {
+            "appId": "com.luoxiaoshan.cheshire",
+            "productName": "CheshireDemo",
+            "directories": {
+                "output": "dist"
+            },
+            "win": {
+                "target": [
+                    "nsis"
+                ],
+                "icon": "static/icon.ico"
+            },
+            "nsis": {
+                "oneClick": False,
+                "allowToChangeInstallationDirectory": True,
+                "createDesktopShortcut": True,
+                "createStartMenuShortcut": True,
+                "shortcutName": "CheshireDemo"
+            }
+        }
+        
         with open(package_json, 'w', encoding='utf-8') as f:
             json.dump(package, f, indent=2, ensure_ascii=False)
         print("更新 package.json 文件。")
@@ -224,6 +250,17 @@ loadConfig();
     """
     create_file(static_path / 'icon.svg', svg_content)
 
+    # 将 SVG 转换为 ICO 并保存
+    ico_content = """
+    <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 124 124" fill="none">
+        <rect width="124" height="124" rx="24" fill="#F97316"/>
+        <path d="M19.375 36.7818V100.625C19.375 102.834 21.1659 104.625 23.375 104.625H87.2181C90.7818 104.625 92.5664 100.316 90.0466 97.7966L26.2034 33.9534C23.6836 31.4336 19.375 33.2182 19.375 36.7818Z" fill="white"/>
+        <circle cx="63.2109" cy="37.5391" r="18.1641" fill="black"/>
+        <rect opacity="0.4" x="81.1328" y="80.7198" width="17.5687" height="17.3876" rx="4" transform="rotate(-45 81.1328 80.7198)" fill="#FDBA74"/>
+    </svg>
+    """
+    create_file(static_path / 'icon.ico', ico_content)
+
 def main():
     print("Electron 示例项目创建脚本")
     print("============================")
@@ -252,6 +289,16 @@ def main():
     
     print("\n安装 axios")
     run_command(['npm', 'install', 'axios', '--save-prod'], cwd=project_path)
+
+    print("\n安装 electron-builder...")
+    run_command(['npm', 'install', 'electron-builder', '--save-dev'], cwd=project_path)
+    
+    # 创建打包脚本
+    build_bat_content = """@echo off
+cd /d "%~dp0"
+npm run build
+"""
+    create_file(project_path / 'build_electron.bat', build_bat_content)
 
     config_path = ensure_config(project_path)
 
@@ -1019,6 +1066,10 @@ npm start
     print(f"  cd {PROJECT_NAME}")
     print("  npm start")
     print("\n或者双击项目目录中的 'start_electron.bat' 文件。")
+
+    print("\n要打包应用程序，请运行：")
+    print("  npm run build")
+    print("\n或者双击项目目录中的 'build_electron.bat' 文件。")
 
 if __name__ == "__main__":
     main()
